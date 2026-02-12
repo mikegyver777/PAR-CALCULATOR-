@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PAR Commission Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #181b24;
+            --surface2: #21252f;
+            --border: #333848;
+            --text: #f0f1f5;
+            --text-dim: #9499ab;
+            --accent-gutters: #22c55e;
+            --accent-insulation: #f59e0b;
+            --accent-coating: #3b82f6;
+            --accent-roof: #ef4444;
+            --accent-gutters-dim: rgba(34,197,94,0.13);
+            --accent-insulation-dim: rgba(245,158,11,0.13);
+            --accent-coating-dim: rgba(59,130,246,0.13);
+            --accent-roof-dim: rgba(239,68,68,0.13);
+            --gold: #fbbf24;
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: 18px; }
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 14px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--accent-gutters), var(--accent-coating), var(--accent-roof));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        /* ═══ JOB SELECTOR ═══ */
+        .job-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .job-toggle {
+            position: relative;
+            padding: 18px 8px 14px;
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .job-toggle .icon { font-size: 28px; margin-bottom: 6px; display: block; }
+        .job-toggle .label {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .job-toggle.active-gutters { border-color: var(--accent-gutters); background: var(--accent-gutters-dim); }
+        .job-toggle.active-insulation { border-color: var(--accent-insulation); background: var(--accent-insulation-dim); }
+        .job-toggle.active-coating { border-color: var(--accent-coating); background: var(--accent-coating-dim); }
+        .job-toggle.active-roof { border-color: var(--accent-roof); background: var(--accent-roof-dim); }
+        .job-toggle .check {
+            position: absolute; top: 6px; right: 6px;
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2.5px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: white; transition: all 0.2s;
+        }
+        .job-toggle.active-gutters .check { background: var(--accent-gutters); border-color: var(--accent-gutters); }
+        .job-toggle.active-insulation .check { background: var(--accent-insulation); border-color: var(--accent-insulation); }
+        .job-toggle.active-coating .check { background: var(--accent-coating); border-color: var(--accent-coating); }
+        .job-toggle.active-roof .check { background: var(--accent-roof); border-color: var(--accent-roof); }
+        /* ═══ INPUTS ═══ */
+        input, select {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            background: var(--surface2);
+            border: 2.5px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent-coating); }
+        input::placeholder { color: var(--text-dim); font-weight: 400; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239499ab' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        /* ═══ SALE INFO ═══ */
+        .sale-info {
+            display: flex; flex-direction: column; gap: 12px;
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .sale-info .field label {
+            display: block; font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 6px;
+        }
+        /* ═══ JOB PANELS ═══ */
+        .job-panel {
+            display: none; border: 2.5px solid var(--border);
+            border-radius: var(--radius); background: var(--surface);
+            margin-bottom: 18px; overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+        .job-panel.active { display: block; }
+        .panel-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 16px 18px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.15rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+        .panel-header.gutters { background: var(--accent-gutters-dim); border-bottom: 2.5px solid var(--accent-gutters); color: var(--accent-gutters); }
+        .panel-header.insulation { background: var(--accent-insulation-dim); border-bottom: 2.5px solid var(--accent-insulation); color: var(--accent-insulation); }
+        .panel-header.coating { background: var(--accent-coating-dim); border-bottom: 2.5px solid var(--accent-coating); color: var(--accent-coating); }
+        .panel-header.roof { background: var(--accent-roof-dim); border-bottom: 2.5px solid var(--accent-roof); color: var(--accent-roof); }
+        .panel-body { padding: 16px; }
+
+        /* Per-job sale price field */
+        .job-sale-field {
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            border: 2.5px solid var(--border);
+            background: var(--surface2);
+        }
+        .job-sale-field label {
+            display: block;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        .job-sale-field input {
+            font-size: 1.3rem;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            padding: 14px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .gutters-sale { border-color: var(--accent-gutters); background: var(--accent-gutters-dim); }
+        .gutters-sale label { color: var(--accent-gutters); }
+        .insulation-sale { border-color: var(--accent-insulation); background: var(--accent-insulation-dim); }
+        .insulation-sale label { color: var(--accent-insulation); }
+        .coating-sale { border-color: var(--accent-coating); background: var(--accent-coating-dim); }
+        .coating-sale label { color: var(--accent-coating); }
+        .roof-sale { border-color: var(--accent-roof); background: var(--accent-roof-dim); }
+        .roof-sale label { color: var(--accent-roof); }
+        /* ═══ ITEM ROWS (mobile-first: stacked) ═══ */
+        .item-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; align-items: center;
+            margin-bottom: 12px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .item-grid:last-of-type { border-bottom: none; }
+        .item-grid.header { display: none; }
+        .item-grid .item-label { font-weight: 700; font-size: 0.95rem; grid-column: 1 / -1; }
+        .item-grid .item-rate { color: var(--text-dim); font-size: 0.78rem; font-weight: 600; grid-column: 1 / -1; margin-top: -6px; margin-bottom: 4px; }
+        .item-grid .item-total {
+            text-align: right; font-weight: 700; font-size: 1.1rem;
+            font-family: 'Oswald', sans-serif;
+            padding: 14px; background: var(--surface2);
+            border-radius: 8px; border: 2.5px solid var(--border);
+        }
+        .add-row-btn {
+            width: 100%; padding: 14px;
+            border: 2.5px dashed var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-dim);
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; margin-top: 6px;
+        }
+        .add-row-btn:hover, .add-row-btn:active { border-color: var(--text-dim); color: var(--text); background: var(--surface2); }
+        .add-row-btn.misc-btn { border-color: rgba(251,191,36,0.3); color: var(--gold); margin-bottom: 4px; }
+        .add-row-btn.misc-btn:hover, .add-row-btn.misc-btn:active { border-color: var(--gold); background: rgba(251,191,36,0.06); }
+        .misc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 10px; padding: 10px; background: rgba(251,191,36,0.04); border: 1.5px solid rgba(251,191,36,0.15); border-radius: 8px; }
+        .misc-row input { font-size: 1rem; }
+        .misc-row .misc-name-wrap { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; }
+        .misc-row .misc-name-wrap input { flex: 1; }
+        .misc-row .misc-amount { grid-column: 1 / -1; }
+        .remove-btn {
+            background: rgba(239,68,68,0.12); border: 2px solid rgba(239,68,68,0.3);
+            color: var(--accent-roof); cursor: pointer;
+            font-size: 1rem; font-weight: 700;
+            padding: 10px 16px; border-radius: 8px;
+            transition: all 0.15s; min-height: 48px;
+        }
+        .remove-btn:hover, .remove-btn:active { background: rgba(239,68,68,0.25); }
+        /* ═══ PAR TOTAL BAR ═══ */
+        .par-total-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 18px; margin-top: 14px; border-radius: 10px;
+            font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 1px;
+        }
+        .par-total-bar.gutters { background: var(--accent-gutters-dim); border: 2.5px solid var(--accent-gutters); color: var(--accent-gutters); }
+        .par-total-bar.insulation { background: var(--accent-insulation-dim); border: 2.5px solid var(--accent-insulation); color: var(--accent-insulation); }
+        .par-total-bar.coating { background: var(--accent-coating-dim); border: 2.5px solid var(--accent-coating); color: var(--accent-coating); }
+        .par-total-bar.roof { background: var(--accent-roof-dim); border: 2.5px solid var(--accent-roof); color: var(--accent-roof); }
+        .par-total-bar .amount { font-size: 1.5rem; }
+        /* ═══ ROOF SELECTORS ═══ */
+        .roof-type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .roof-type-btn {
+            padding: 14px 10px; border: 2.5px solid var(--border); border-radius: 10px;
+            background: var(--surface2); color: var(--text-dim); cursor: pointer;
+            text-align: center; transition: all 0.2s; font-family: 'Source Sans 3', sans-serif;
+        }
+        .roof-type-btn.active { border-color: var(--accent-roof); background: var(--accent-roof-dim); color: var(--text); }
+        .roof-type-btn .rtype-name { display: block; font-weight: 700; font-size: 0.95rem; }
+        .roof-type-btn .rtype-detail { display: block; font-size: 0.72rem; opacity: 0.7; margin-top: 3px; }
+        .grade-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grade-btn {
+            padding: 16px 12px; border: 2.5px solid var(--border); border-radius: 10px;
+            background: var(--surface2); color: var(--text-dim); cursor: pointer;
+            text-align: center; transition: all 0.2s; font-family: 'Source Sans 3', sans-serif;
+        }
+        .grade-btn.active { border-color: var(--accent-roof); background: var(--accent-roof-dim); color: var(--text); }
+        .grade-btn.presidential.active { border-color: var(--gold); background: rgba(251,191,36,0.13); color: var(--gold); }
+        .grade-btn .grade-label { display: block; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+        .grade-btn .grade-price { display: block; font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; }
+        .grade-btn.disabled { opacity: 0.25; pointer-events: none; }
+        /* ═══ ROOF EXTRAS ═══ */
+        .roof-extras {
+            display: flex; flex-direction: column; gap: 14px;
+            margin-top: 14px; padding: 16px;
+            background: var(--surface2); border-radius: 10px; border: 2px solid var(--border);
+        }
+        .roof-extras > div > label:first-child {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--text-dim); display: block; margin-bottom: 6px;
+        }
+        .steep-toggle {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; border: 2.5px solid var(--border); border-radius: 10px;
+            background: var(--surface); cursor: pointer;
+            user-select: none; -webkit-user-select: none; transition: all 0.2s;
+        }
+        .steep-toggle.active { border-color: var(--accent-roof); background: var(--accent-roof-dim); }
+        .steep-toggle input { display: none; }
+        .steep-toggle .toggle-box {
+            width: 28px; height: 28px; border: 2.5px solid var(--border);
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; color: white; transition: all 0.2s; flex-shrink: 0;
+        }
+        .steep-toggle.active .toggle-box { background: var(--accent-roof); border-color: var(--accent-roof); }
+        .steep-toggle span { font-size: 0.95rem; font-weight: 700; }
+        /* ═══ COMMISSION TABLE ═══ */
+        .commission-panel {
+            background: var(--surface); border: 2.5px solid var(--gold);
+            border-radius: var(--radius); overflow: hidden; margin-top: 22px;
+        }
+        .commission-header {
+            background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(251,191,36,0.05));
+            border-bottom: 2.5px solid var(--gold); padding: 16px 18px;
+            font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase; color: var(--gold); text-align: center;
+        }
+        .commission-body { padding: 16px; }
+
+        .comm-table { margin-bottom: 12px; }
+
+        .comm-table-header {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+            gap: 6px;
+            padding: 8px 10px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-dim);
+        }
+
+        .comm-table-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+            gap: 6px;
+            padding: 10px;
+            border-left: 2px solid var(--border);
+            border-right: 2px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .comm-table-row .ctr-job {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .comm-table-row .ctr-val {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .comm-table-row .ctr-val.positive { color: var(--accent-gutters); }
+        .comm-table-row .ctr-val.negative { color: var(--accent-roof); }
+
+        .comm-table-row .ctr-val.ctr-comm {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .comm-table-row .ctr-formula {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .comm-table-row .ctr-note {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+        }
+
+        /* COMBINED TOTAL ROW */
+        .comm-table-combined {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr;
+            gap: 6px;
+            padding: 12px 10px;
+            background: rgba(251,191,36,0.08);
+            border: 2.5px solid var(--gold);
+            border-radius: 0 0 8px 8px;
+            align-items: center;
+        }
+
+        .comm-table-combined .combined-label {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: var(--gold);
+        }
+
+        .comm-table-combined .combined-val {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .comm-table-combined .combined-comm {
+            font-size: 1.4rem;
+            color: var(--gold);
+        }
+
+        /* Mobile: stack the table on small screens */
+        @media (max-width: 600px) {
+            .comm-table-header { display: none; }
+
+            .comm-table-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                padding: 12px 10px;
+                border-radius: 0;
+            }
+            .comm-table-row .ctr-job {
+                grid-column: 1 / -1;
+                font-size: 1rem;
+                padding-bottom: 4px;
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 2px;
+            }
+            .comm-table-row .ctr-cell { }
+            .comm-table-row .ctr-cell .ctr-mobile-label {
+                display: block;
+                font-size: 0.6rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-dim);
+                margin-bottom: 1px;
+            }
+            .comm-table-row .ctr-cell.ctr-comm-cell {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 8px;
+                background: rgba(251,191,36,0.06);
+                border: 1.5px solid var(--gold);
+                border-radius: 6px;
+                margin-top: 4px;
+            }
+
+            .comm-table-combined {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .comm-table-combined .combined-label {
+                grid-column: 1 / -1;
+                font-size: 1rem;
+                text-align: center;
+                padding-bottom: 6px;
+                border-bottom: 1.5px solid var(--gold);
+                margin-bottom: 2px;
+            }
+            .comm-table-combined .combined-val { text-align: center; }
+            .comm-table-combined .combined-comm {
+                grid-column: 1 / -1;
+                text-align: center;
+                font-size: 1.6rem;
+            }
+            .combined-mobile-label {
+                display: block;
+                font-size: 0.6rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-dim);
+                font-family: 'Source Sans 3', sans-serif;
+            }
+        }
+
+        @media (min-width: 601px) {
+            .ctr-mobile-label { display: none !important; }
+            .combined-mobile-label { display: none !important; }
+        }
+        .total-commission-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 20px; margin-top: 16px;
+            background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.06));
+            border: 2.5px solid var(--gold); border-radius: 12px;
+        }
+        .total-commission-bar .label {
+            font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700;
+            letter-spacing: 1.5px; color: var(--gold);
+        }
+        .total-commission-bar .amount {
+            font-family: 'Oswald', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--gold);
+        }
+        .split-section { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        .split-section label {
+            display: block; font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--text-dim); margin-bottom: 6px;
+        }
+        .per-person-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 20px; margin-top: 14px;
+            background: rgba(34,197,94,0.08); border: 2.5px solid var(--accent-gutters); border-radius: 12px;
+        }
+        .per-person-bar .label {
+            font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700;
+            letter-spacing: 1.5px; color: var(--text);
+        }
+        .per-person-bar .amount {
+            font-family: 'Oswald', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--accent-gutters);
+        }
+        /* ═══ BUTTONS ═══ */
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; padding-bottom: 30px; }
+        .btn {
+            padding: 18px; border: none; border-radius: 10px;
+            font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+            transition: all 0.2s; min-height: 56px;
+        }
+        .btn-reset { background: var(--surface2); color: var(--text); border: 2.5px solid var(--border); }
+        .btn-reset:active { border-color: var(--accent-roof); color: var(--accent-roof); }
+        .btn-print { background: var(--accent-coating); color: white; }
+        .btn-print:active { opacity: 0.8; }
+        .divider { height: 1.5px; background: var(--border); margin: 14px 0; }
+        .hidden { display: none !important; }
+        /* ═══ TABLET 768+ ═══ */
+        @media (min-width: 768px) {
+            body { padding: 20px; max-width: 900px; margin: 0 auto; }
+            .sale-info { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+            .item-grid { grid-template-columns: 2fr 1fr 1fr 1fr; margin-bottom: 8px; padding-bottom: 8px; }
+            .item-grid .item-label { grid-column: 1; }
+            .item-grid .item-rate { grid-column: 2; margin-top: 0; margin-bottom: 0; }
+            .item-grid.header { display: grid; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-dim); }
+            .comm-table-header { display: grid; }
+            .comm-table-row .ctr-job { grid-column: 1; }
+            .split-section { flex-direction: row; }
+            .split-section > div { flex: 1; }
+            .roof-type-selector { grid-template-columns: repeat(4, 1fr); }
+            .roof-extras { flex-direction: row; }
+            .roof-extras > div { flex: 1; }
+        }
+        @media (min-width: 1100px) { body { max-width: 1100px; } }
+        /* ═══ PRINT ═══ */
+        @media print {
+            * { color: black !important; box-shadow: none !important; }
+            html { font-size: 10px; }
+            body { background: white !important; color: black !important; padding: 0; margin: 0; font-size: 10px; }
+
+            /* HIDE UI-ONLY ELEMENTS */
+            .job-selector, .btn-row, .add-row-btn, .add-row-btn.misc-btn, .remove-btn,
+            .roof-type-selector, .grade-selector, .roof-type-btn, .grade-btn,
+            .section-label, .subtitle, .divider { display: none !important; }
+
+            h1 {
+                font-size: 18px !important;
+                background: none !important;
+                -webkit-text-fill-color: black !important;
+                margin-bottom: 2px;
+                letter-spacing: 2px;
+            }
+
+            /* SALE INFO - tight horizontal bar */
+            .sale-info {
+                display: grid !important;
+                grid-template-columns: 2fr 1fr !important;
+                gap: 6px !important;
+                border: 1.5px solid black !important;
+                background: white !important;
+                padding: 6px 10px !important;
+                margin-bottom: 6px !important;
+                border-radius: 0 !important;
+            }
+            .sale-info .field label { font-size: 7px !important; margin-bottom: 1px !important; color: #333 !important; }
+            .sale-info input { font-size: 10px !important; padding: 2px 4px !important; border: 1px solid #999 !important; border-radius: 2px !important; background: white !important; }
+
+            /* Per-job sale price in panels */
+            .job-sale-field {
+                padding: 3px 6px !important;
+                margin-bottom: 4px !important;
+                border: 1.5px solid black !important;
+                border-radius: 0 !important;
+                background: #f5f5f5 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+            }
+            .job-sale-field label {
+                font-size: 8px !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                color: #333 !important;
+            }
+            .job-sale-field input {
+                font-size: 11px !important;
+                padding: 2px 6px !important;
+                text-align: right !important;
+                flex: 1 !important;
+                border: 1px solid #999 !important;
+            }
+
+            /* JOB PANELS */
+            .job-panel.active {
+                display: block !important;
+                border: 1.5px solid black !important;
+                margin-bottom: 5px !important;
+                border-radius: 0 !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .panel-header {
+                background: #e8e8e8 !important;
+                color: black !important;
+                border-bottom: 1.5px solid black !important;
+                padding: 3px 8px !important;
+                font-size: 11px !important;
+                letter-spacing: 1px !important;
+            }
+            .panel-body { padding: 2px 6px 4px !important; }
+
+            /* Coating product wrappers */
+            #coating-products > div { margin-bottom: 2px !important; padding-bottom: 2px !important; border-bottom: 0.5px solid #ddd !important; }
+            #coating-products > div > div:first-child { margin-bottom: 1px !important; }
+            #coating-products select { font-size: 9px !important; padding: 1px 3px !important; border: 1px solid #bbb !important; border-radius: 1px !important; }
+
+            /* ITEM ROWS - force single-line table look */
+            .item-grid {
+                display: grid !important;
+                grid-template-columns: 3fr 1.2fr 1fr 1.5fr !important;
+                gap: 4px !important;
+                align-items: center !important;
+                margin-bottom: 0 !important;
+                padding: 2px 0 !important;
+                border-bottom: 0.5px solid #ddd !important;
+            }
+            .item-grid:last-of-type { border-bottom: none !important; }
+
+            /* Force all labels/rates inline (override mobile stacking AND inline styles) */
+            .item-grid .item-label {
+                grid-column: 1 !important;
+                font-size: 9px !important;
+                font-weight: 700 !important;
+            }
+            .item-grid .item-rate {
+                grid-column: 2 !important;
+                font-size: 8px !important;
+                margin: 0 !important;
+                color: #555 !important;
+            }
+            .item-grid .item-total {
+                grid-column: 4 !important;
+                font-size: 9px !important;
+                padding: 1px 4px !important;
+                border: none !important;
+                background: transparent !important;
+                text-align: right !important;
+                font-weight: 700 !important;
+            }
+            .item-grid [style*="grid-column"] {
+                grid-column: auto !important;
+            }
+            .item-grid div[style*="grid-column"]:first-child {
+                grid-column: 1 / 3 !important;
+            }
+            .item-grid input[type="number"] {
+                font-size: 9px !important;
+                padding: 1px 3px !important;
+                border: 1px solid #bbb !important;
+                border-radius: 1px !important;
+                background: white !important;
+                text-align: center !important;
+            }
+
+            /* HEADER ROW */
+            .item-grid.header {
+                display: grid !important;
+                font-size: 7px !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                color: #666 !important;
+                border-bottom: 1px solid black !important;
+                padding-bottom: 2px !important;
+                margin-bottom: 2px !important;
+            }
+
+            /* MISC ROWS - compact inline */
+            .misc-row {
+                display: grid !important;
+                grid-template-columns: 3fr 2fr !important;
+                gap: 4px !important;
+                padding: 1px 4px !important;
+                margin-bottom: 1px !important;
+                border: none !important;
+                background: transparent !important;
+                border-bottom: 0.5px solid #ddd !important;
+                border-radius: 0 !important;
+            }
+            .misc-row .misc-name-wrap {
+                grid-column: 1 !important;
+                display: flex !important;
+            }
+            .misc-row .misc-name-wrap input { font-size: 9px !important; padding: 1px 3px !important; border: none !important; font-weight: 700 !important; }
+            .misc-row .misc-name-wrap .remove-btn { display: none !important; }
+            .misc-row input[type="number"],
+            .misc-row .misc-amount {
+                grid-column: 2 !important;
+                font-size: 9px !important;
+                padding: 1px 3px !important;
+                border: 1px solid #bbb !important;
+                text-align: right !important;
+            }
+
+            /* PAR TOTAL BAR */
+            .par-total-bar {
+                padding: 3px 8px !important;
+                margin-top: 3px !important;
+                border: 1.5px solid black !important;
+                background: #f0f0f0 !important;
+                border-radius: 0 !important;
+                font-size: 10px !important;
+            }
+            .par-total-bar .amount { font-size: 13px !important; }
+
+            /* ROOF EXTRAS */
+            .steep-toggle {
+                border: 1px solid #999 !important;
+                background: white !important;
+                padding: 2px 6px !important;
+                gap: 4px !important;
+                border-radius: 2px !important;
+            }
+            .steep-toggle span { font-size: 8px !important; }
+            .steep-toggle .toggle-box {
+                width: 14px !important; height: 14px !important;
+                font-size: 9px !important;
+                border: 1px solid black !important;
+                border-radius: 2px !important;
+            }
+            .roof-extras {
+                border: 1px solid #999 !important;
+                background: white !important;
+                padding: 3px 6px !important;
+                margin-top: 3px !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                border-radius: 0 !important;
+            }
+            .roof-extras > div > label:first-child { font-size: 7px !important; margin-bottom: 1px !important; }
+            .roof-extras input { font-size: 9px !important; padding: 1px 3px !important; }
+
+            /* ══════ COMMISSION TABLE — PRINT ══════ */
+            .commission-panel {
+                border: 2px solid black !important;
+                margin-top: 6px !important;
+                border-radius: 0 !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .commission-header {
+                background: black !important;
+                color: white !important;
+                border-bottom: none !important;
+                padding: 4px 8px !important;
+                font-size: 12px !important;
+                text-align: center !important;
+            }
+            .commission-body { padding: 4px 6px !important; }
+
+            .comm-table { margin-bottom: 4px !important; }
+
+            .comm-table-header {
+                display: grid !important;
+                grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr !important;
+                gap: 4px !important;
+                padding: 3px 6px !important;
+                background: #e0e0e0 !important;
+                border: 1.5px solid black !important;
+                border-radius: 0 !important;
+                font-size: 7px !important;
+                color: #333 !important;
+            }
+
+            .comm-table-row {
+                display: grid !important;
+                grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr !important;
+                gap: 4px !important;
+                padding: 3px 6px !important;
+                border-left: 1.5px solid black !important;
+                border-right: 1.5px solid black !important;
+                border-bottom: 0.5px solid #aaa !important;
+                border-radius: 0 !important;
+            }
+            .comm-table-row .ctr-job { font-size: 9px !important; grid-column: 1 !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+            .comm-table-row .ctr-cell { grid-column: auto !important; background: transparent !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+            .comm-table-row .ctr-val { font-size: 10px !important; color: black !important; }
+            .comm-table-row .ctr-val.ctr-comm { font-size: 11px !important; font-weight: 900 !important; }
+            .comm-table-row .ctr-formula, .comm-table-row .ctr-note { font-size: 6px !important; }
+            .comm-table-row .ctr-cell.ctr-comm-cell { grid-column: auto !important; text-align: left !important; background: transparent !important; border: none !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; }
+            .ctr-mobile-label { display: none !important; }
+            .combined-mobile-label { display: none !important; }
+
+            .comm-table-combined {
+                display: grid !important;
+                grid-template-columns: 1.2fr 1fr 1fr 1fr 1.2fr !important;
+                gap: 4px !important;
+                padding: 5px 6px !important;
+                background: #f0f0e0 !important;
+                border: 2px solid black !important;
+                border-radius: 0 !important;
+            }
+            .comm-table-combined .combined-label { font-size: 9px !important; color: black !important; grid-column: 1 !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+            .comm-table-combined .combined-val { font-size: 11px !important; color: black !important; grid-column: auto !important; text-align: left !important; }
+            .comm-table-combined .combined-comm { font-size: 14px !important; font-weight: 900 !important; }
+
+            /* TOTAL COMMISSION */
+            .total-commission-bar {
+                padding: 6px 10px !important;
+                margin-top: 5px !important;
+                border: 2.5px solid black !important;
+                background: #f0f0f0 !important;
+                border-radius: 0 !important;
+            }
+            .total-commission-bar .label { color: black !important; font-size: 13px !important; }
+            .total-commission-bar .amount { color: black !important; font-size: 22px !important; }
+
+            /* SPLIT SECTION */
+            .split-section {
+                flex-direction: row !important;
+                gap: 8px !important;
+                margin-top: 3px !important;
+            }
+            .split-section label { font-size: 7px !important; margin-bottom: 1px !important; color: #333 !important; }
+            .split-section input { font-size: 9px !important; padding: 2px 4px !important; }
+
+            /* PER REP - BIGGEST on the page */
+            .per-person-bar {
+                padding: 8px 12px !important;
+                margin-top: 4px !important;
+                border: 3px solid black !important;
+                background: #e8f5e8 !important;
+                border-radius: 0 !important;
+            }
+            .per-person-bar .label { color: black !important; font-size: 14px !important; }
+            .per-person-bar .amount { color: black !important; font-size: 28px !important; font-weight: 900 !important; }
+
+            @page { margin: 0.25in; size: letter; }
+        }
+    </style>
+</head>
+<body>
+<h1>PAR Commission Calculator</h1>
+<div class="subtitle">Select Jobs Below to Calculate Commission</div>
+<div class="job-selector">
+    <div class="job-toggle" id="toggle-gutters" onclick="toggleJob('gutters')"><div class="check" id="check-gutters"></div><span class="icon">🏠</span><div class="label">Gutters</div></div>
+    <div class="job-toggle" id="toggle-insulation" onclick="toggleJob('insulation')"><div class="check" id="check-insulation"></div><span class="icon">🧱</span><div class="label">Insulation</div></div>
+    <div class="job-toggle" id="toggle-coating" onclick="toggleJob('coating')"><div class="check" id="check-coating"></div><span class="icon">🎨</span><div class="label">Coating</div></div>
+    <div class="job-toggle" id="toggle-roof" onclick="toggleJob('roof')"><div class="check" id="check-roof"></div><span class="icon">🔨</span><div class="label">Roof</div></div>
+</div>
+<div class="sale-info">
+    <div class="field"><label>Customer Name</label><input type="text" id="customerName" placeholder="Enter name..."></div>
+    <div class="field"><label>Number of Reps (Split)</label><input type="number" id="numReps" inputmode="numeric" value="1" min="1" step="1" oninput="calculate()"></div>
+</div>
+<!-- GUTTERS -->
+<div class="job-panel" id="panel-gutters">
+    <div class="panel-header gutters">🏠 PAR Gutters</div>
+    <div class="panel-body">
+        <div class="job-sale-field gutters-sale"><label>💲 Sale Price for Gutters</label><input type="number" inputmode="decimal" id="gutters-sale" step="0.01" placeholder="Enter sale price..." oninput="calculate()"></div>
+        <div class="item-grid header"><span>Item</span><span>Rate</span><span>Qty</span><span style="text-align:right">Total</span></div>
+        <div class="item-grid"><div class="item-label">Gutters</div><div class="item-rate">$27 / ln ft</div><input type="number" inputmode="decimal" id="gutters-lf" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="gutters-lf-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Wood Replacement</div><div class="item-rate">$17 / ln ft</div><input type="number" inputmode="decimal" id="gutters-wood" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="gutters-wood-total">$0.00</div></div>
+        <div id="gutters-addons"></div>
+        <button class="add-row-btn" onclick="addAddon('gutters')">+ Add Line Item</button>
+        <div class="divider"></div>
+        <div class="section-label">📋 Miscellaneous Costs</div>
+        <div id="gutters-misc"></div>
+        <button class="add-row-btn misc-btn" onclick="addMisc('gutters')">+ Add Misc Item</button>
+        <div class="par-total-bar gutters"><span>PAR TOTAL</span><span class="amount" id="gutters-par-total">$0.00</span></div>
+    </div>
+</div>
+<!-- INSULATION -->
+<div class="job-panel" id="panel-insulation">
+    <div class="panel-header insulation">🧱 PAR Insulation</div>
+    <div class="panel-body">
+        <div class="job-sale-field insulation-sale"><label>💲 Sale Price for Insulation</label><input type="number" inputmode="decimal" id="insulation-sale" step="0.01" placeholder="Enter sale price..." oninput="calculate()"></div>
+        <div class="item-grid header"><span>Item</span><span>Rate</span><span>Qty</span><span style="text-align:right">Total</span></div>
+        <div class="item-grid"><div class="item-label">Atticat Insulation</div><div class="item-rate">$4 / sq ft</div><input type="number" inputmode="decimal" id="insulation-sf" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="insulation-sf-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Wood Replacement</div><div class="item-rate">$17 / ln ft</div><input type="number" inputmode="decimal" id="insulation-wood" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="insulation-wood-total">$0.00</div></div>
+        <div id="insulation-addons"></div>
+        <button class="add-row-btn" onclick="addAddon('insulation')">+ Add Line Item</button>
+        <div class="divider"></div>
+        <div class="section-label">📋 Miscellaneous Costs</div>
+        <div id="insulation-misc"></div>
+        <button class="add-row-btn misc-btn" onclick="addMisc('insulation')">+ Add Misc Item</button>
+        <div class="par-total-bar insulation"><span>PAR TOTAL</span><span class="amount" id="insulation-par-total">$0.00</span></div>
+    </div>
+</div>
+<!-- COATING -->
+<div class="job-panel" id="panel-coating">
+    <div class="panel-header coating">🎨 PAR Coating</div>
+    <div class="panel-body">
+        <div class="job-sale-field coating-sale"><label>💲 Sale Price for Coating</label><input type="number" inputmode="decimal" id="coating-sale" step="0.01" placeholder="Enter sale price..." oninput="calculate()"></div>
+        <div id="coating-products"></div>
+        <button class="add-row-btn" onclick="addCoatingProduct()">+ Add Product</button>
+        <div class="divider"></div>
+        <div class="section-label">📋 Miscellaneous Costs</div>
+        <div id="coating-misc"></div>
+        <button class="add-row-btn misc-btn" onclick="addMisc('coating')">+ Add Misc Item</button>
+        <div class="par-total-bar coating"><span>PAR TOTAL</span><span class="amount" id="coating-par-total">$0.00</span></div>
+    </div>
+</div>
+<!-- ROOF -->
+<div class="job-panel" id="panel-roof">
+    <div class="panel-header roof">🔨 PAR Roof</div>
+    <div class="panel-body">
+        <div class="job-sale-field roof-sale"><label>💲 Sale Price for Roof</label><input type="number" inputmode="decimal" id="roof-sale" step="0.01" placeholder="Enter sale price..." oninput="calculate()"></div>
+        <div style="margin-bottom:16px;"><div class="section-label">Roof Type</div>
+            <div class="roof-type-selector">
+                <button class="roof-type-btn active" data-type="overlay" onclick="selectRoofType('overlay')"><span class="rtype-name">Overlay</span><span class="rtype-detail">Includes Felt</span></button>
+                <button class="roof-type-btn" data-type="tearoff" onclick="selectRoofType('tearoff')"><span class="rtype-name">Tear Off</span><span class="rtype-detail">&nbsp;</span></button>
+                <button class="roof-type-btn" data-type="tearsheet" onclick="selectRoofType('tearsheet')"><span class="rtype-name">Tear & Sheet</span><span class="rtype-detail">Includes OSB</span></button>
+                <button class="roof-type-btn" data-type="flat" onclick="selectRoofType('flat')"><span class="rtype-name">Flat Roof</span><span class="rtype-detail">No Sheeting</span></button>
+            </div>
+        </div>
+        <div style="margin-bottom:16px;" id="roof-grade-section"><div class="section-label">Shingle Grade</div>
+            <div class="grade-selector">
+                <button class="grade-btn active" id="grade-standard-btn" onclick="selectGrade('standard')"><span class="grade-label">Standard</span><span class="grade-price" id="grade-standard-price">$920 / sq</span></button>
+                <button class="grade-btn presidential" id="grade-presidential-btn" onclick="selectGrade('presidential')"><span class="grade-label">👑 Presidential</span><span class="grade-price" id="grade-presidential-price">$1,085 / sq</span></button>
+            </div>
+        </div>
+        <select id="roof-type" style="display:none;"><option value="overlay" selected></option><option value="tearoff"></option><option value="tearsheet"></option><option value="flat"></option></select>
+        <select id="roof-grade" style="display:none;"><option value="standard" selected></option><option value="presidential"></option></select>
+        <div class="item-grid header"><span>Item</span><span>Rate</span><span>Qty</span><span style="text-align:right">Total</span></div>
+        <div class="item-grid"><div class="item-label" id="roof-main-label">Overlay (Felt Incl.)</div><div class="item-rate" id="roof-main-rate">$920 / sq</div><input type="number" inputmode="decimal" id="roof-squares" step="0.01" placeholder="Squares" oninput="calculate()"><div class="item-total" id="roof-squares-total">$0.00</div></div>
+        <div class="divider"></div>
+        <div class="item-grid"><div class="item-label">Extra Layer / Slate</div><div class="item-rate">$65 / sq</div><input type="number" inputmode="decimal" id="roof-extralayer" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-extralayer-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Double Handle</div><div class="item-rate">$50 / sq</div><input type="number" inputmode="decimal" id="roof-doublehandle" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-doublehandle-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">OSB</div><div class="item-rate">$375 / sq</div><input type="number" inputmode="decimal" id="roof-osb" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-osb-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">OSB w/ Radiant Barrier</div><div class="item-rate">$400 / sq</div><input type="number" inputmode="decimal" id="roof-osbradiant" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-osbradiant-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Wood Replacement</div><div class="item-rate">$17 / ft</div><input type="number" inputmode="decimal" id="roof-wood" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-wood-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Rafter Tails Complete</div><div class="item-rate">$350 / ft</div><input type="number" inputmode="decimal" id="roof-raftertails" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-raftertails-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Through Walls</div><div class="item-rate">$220 / ft</div><input type="number" inputmode="decimal" id="roof-throughwalls" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-throughwalls-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Turbines</div><div class="item-rate">$125 / ea</div><input type="number" inputmode="numeric" id="roof-turbines" step="1" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-turbines-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Fan Attics</div><div class="item-rate">$1,000 / ea</div><input type="number" inputmode="numeric" id="roof-fanattics" step="1" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-fanattics-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Dormers</div><div class="item-rate">$225 / ea</div><input type="number" inputmode="numeric" id="roof-dormers" step="1" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-dormers-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Ridge Vent (Required)</div><div class="item-rate">$15 / ft</div><input type="number" inputmode="decimal" id="roof-ridgevent" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-ridgevent-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Atticat</div><div class="item-rate">$4 / sq ft</div><input type="number" inputmode="decimal" id="roof-atticat" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-atticat-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Permits</div><div class="item-rate">$750 / ea</div><input type="number" inputmode="numeric" id="roof-permits" step="1" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-permits-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Gutters</div><div class="item-rate">$27 / ft</div><input type="number" inputmode="decimal" id="roof-gutters" step="0.01" placeholder="0" oninput="calculate()"><div class="item-total" id="roof-gutters-total">$0.00</div></div>
+        <div class="item-grid"><div class="item-label">Dump Fee</div><div class="item-rate">$700 flat</div><input type="number" inputmode="numeric" id="roof-dumpfee" step="1" value="0" oninput="calculate()"><div class="item-total" id="roof-dumpfee-total">$0.00</div></div>
+        <div class="divider"></div>
+        <div class="section-label">📋 Miscellaneous Costs</div>
+        <div id="roof-misc"></div>
+        <button class="add-row-btn misc-btn" onclick="addMisc('roof')">+ Add Misc Item</button>
+        <div class="roof-extras">
+            <div><label>Steep Pitch (+45%)</label><div class="steep-toggle" id="steepToggle" onclick="toggleSteep()"><input type="checkbox" id="roof-steep"><div class="toggle-box" id="steepBox"></div><span>Add 45% Steep Price</span></div></div>
+            <div><label>Financing Discount %</label><input type="number" inputmode="decimal" id="roof-financing" step="0.01" placeholder="0" oninput="calculate()"></div>
+        </div>
+        <div class="par-total-bar roof" style="margin-top:16px;"><span>TOTAL JOB COST (PAR)</span><span class="amount" id="roof-par-total">$0.00</span></div>
+    </div>
+</div>
+<!-- COMMISSION SUMMARY -->
+<div class="commission-panel" id="commissionPanel">
+    <div class="commission-header">💰 Commission Breakdown</div>
+    <div class="commission-body">
+        <!-- Table Header -->
+        <div class="comm-table">
+            <div class="comm-table-header">
+                <span>Job</span>
+                <span>Job Cost (PAR)</span>
+                <span>Sale Price</span>
+                <span>Over / Under</span>
+                <span>Commission</span>
+            </div>
+            <div id="commissionRows"></div>
+            <!-- Combined Total Row -->
+            <div class="comm-table-combined" id="combinedRow">
+                <span class="combined-label">COMBINED TOTAL</span>
+                <span class="combined-val" id="combinedPAR">$0.00</span>
+                <span class="combined-val" id="combinedSale">$0.00</span>
+                <span class="combined-val" id="combinedDiff">$0.00</span>
+                <span class="combined-val combined-comm" id="combinedComm">$0.00</span>
+            </div>
+        </div>
+
+        <div class="total-commission-bar">
+            <div class="label">TOTAL COMMISSION</div>
+            <div class="amount" id="totalCommission">$0.00</div>
+        </div>
+
+        <div class="split-section">
+            <div><label>Reps Splitting Commission</label><input type="number" inputmode="numeric" id="splitCount" value="1" min="1" step="1" oninput="calculate()"></div>
+            <div><label>Ride Along Fee (deducted per rep)</label><input type="number" inputmode="decimal" id="rideAlongDeduct" step="0.01" placeholder="$0.00" oninput="calculate()"></div>
+        </div>
+
+        <div class="per-person-bar">
+            <div class="label">PER REP COMMISSION</div>
+            <div class="amount" id="perRepCommission">$0.00</div>
+        </div>
+    </div>
+</div>
+<div class="btn-row">
+    <button class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+</div>
+<script>
+const activeJobs=new Set();let addonCount=0,coatingCount=0,miscCount=0;
+const CP=[{key:'square_count',name:'Square Count',rate:675,unit:'sq'},{key:'windows',name:'Windows/Reglaze/Paint',rate:215,unit:'ea'},{key:'security_door',name:'Security Door',rate:375,unit:'ea'},{key:'burglar_bars',name:'Burglar Bars',rate:200,unit:'ea'},{key:'awning_under3',name:'Metal Awning Under 3ft',rate:250,unit:'ea'},{key:'awning_over3',name:'Metal Awning Over 3ft',rate:325,unit:'ea'},{key:'spanish_lace',name:'Spanish Lace',rate:245,unit:'sq'},{key:'wood_replacement',name:'Wood Replacement (eave/fascia)',rate:17,unit:'ln ft'},{key:'wood_repairs',name:'Wood Repairs (siding)',rate:750,unit:'sq'},{key:'wood_siding',name:'Wood Siding/Eave Strip',rate:350,unit:'sq'},{key:'one_float',name:'One Float',rate:200,unit:'sq'},{key:'two_float',name:'Two Float',rate:450,unit:'sq'},{key:'lath_paper',name:'Lath Paper Three Float',rate:1250,unit:'sq'},{key:'structural_crack',name:'Structural Crack',rate:225,unit:'ea'},{key:'remove_patio',name:'Remove Patio Overhang',rate:250,unit:'ea'},{key:'door',name:'Door',rate:250,unit:'ea'},{key:'custom',name:'➕ Custom Item...',rate:0,unit:''}];
+const RR={overlay:{standard:920,presidential:1085},tearoff:{standard:990,presidential:1265},tearsheet:{standard:1390,presidential:1415},flat:{standard:1050,presidential:null}};
+const RL={overlay:'Overlay (Felt Incl.)',tearoff:'Tear Off',tearsheet:'Tear & Sheet (OSB Incl.)',flat:'Flat Roof (No Sheeting)'};
+function toggleJob(j){if(activeJobs.has(j))activeJobs.delete(j);else activeJobs.add(j);const t=document.getElementById('toggle-'+j),p=document.getElementById('panel-'+j),c=document.getElementById('check-'+j);if(activeJobs.has(j)){t.classList.add('active-'+j);p.classList.add('active');c.textContent='✓';}else{t.classList.remove('active-'+j);p.classList.remove('active');c.textContent='';}calculate();}
+function toggleSteep(){const cb=document.getElementById('roof-steep');cb.checked=!cb.checked;const t=document.getElementById('steepToggle'),b=document.getElementById('steepBox');if(cb.checked){t.classList.add('active');b.textContent='✓';}else{t.classList.remove('active');b.textContent='';}calculate();}
+function selectRoofType(type){document.getElementById('roof-type').value=type;document.querySelectorAll('.roof-type-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.roof-type-btn[data-type="${type}"]`).classList.add('active');const pb=document.getElementById('grade-presidential-btn'),sp=document.getElementById('grade-standard-price'),pp=document.getElementById('grade-presidential-price'),r=RR[type];sp.textContent='$'+r.standard.toLocaleString()+' / sq';if(r.presidential){pp.textContent='$'+r.presidential.toLocaleString()+' / sq';pb.classList.remove('disabled');}else{pp.textContent='N/A';pb.classList.add('disabled');if(document.getElementById('roof-grade').value==='presidential')selectGrade('standard');}document.getElementById('roof-main-label').textContent=RL[type];calculate();}
+function selectGrade(g){document.getElementById('roof-grade').value=g;const s=document.getElementById('grade-standard-btn'),p=document.getElementById('grade-presidential-btn');s.classList.remove('active');p.classList.remove('active');if(g==='standard')s.classList.add('active');else p.classList.add('active');calculate();}
+function v(x){if(!x)return 0;const n=parseFloat(String(x).replace(/[,$]/g,''));return isNaN(n)?0:n;}
+function fmt(x){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(x||0);}
+function addAddon(type){addonCount++;const id=type[0]+'a-'+addonCount,c=document.getElementById(type+'-addons'),d=document.createElement('div');d.className='item-grid';d.id=id;d.innerHTML=`<div class="item-label" style="grid-column:1/-1"><input type="text" placeholder="Item name..." style="font-weight:700;"></div><input type="number" inputmode="decimal" placeholder="Rate $" step="0.01" oninput="calculate()"><div style="display:flex;gap:6px;align-items:center;"><input type="number" inputmode="decimal" placeholder="Qty" step="0.01" oninput="calculate()" style="flex:1;"><button class="remove-btn" onclick="removeRow('${id}')">✕</button></div><div class="item-total" id="${id}-total" style="grid-column:1/-1;">$0.00</div>`;c.appendChild(d);}
+function addCoatingProduct(){coatingCount++;const id='cp-'+coatingCount,c=document.getElementById('coating-products'),d=document.createElement('div');d.id=id;d.style.cssText='margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04);';const opts=CP.map(p=>`<option value="${p.key}" data-rate="${p.rate}" data-unit="${p.unit}">${p.name} ${p.rate>0?'- $'+p.rate.toLocaleString()+'/'+p.unit:''}</option>`).join('');d.innerHTML=`<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;"><select onchange="handleCS(this,'${id}')" style="flex:1;"><option value="">Select Product...</option>${opts}</select><button class="remove-btn" onclick="removeRow('${id}')">✕</button></div><div class="item-grid" id="${id}-main" style="border-bottom:none;margin-bottom:0;padding-bottom:0;"><div class="item-rate" id="${id}-rate"></div><input type="number" inputmode="decimal" placeholder="Qty" step="0.01" oninput="calculate()"><div class="item-total" id="${id}-total" style="grid-column:1/-1;">$0.00</div></div><div class="item-grid hidden" id="${id}-custom" style="border-bottom:none;margin-bottom:0;padding-bottom:0;"><div class="item-label" style="grid-column:1/-1"><input type="text" placeholder="Custom item name..." style="font-weight:700;"></div><input type="number" inputmode="decimal" placeholder="Rate $" step="0.01" oninput="calculate()"><input type="number" inputmode="decimal" placeholder="Qty" step="0.01" oninput="calculate()"><div class="item-total" id="${id}-custom-total" style="grid-column:1/-1;">$0.00</div></div>`;c.appendChild(d);}
+function handleCS(sel,id){const cr=document.getElementById(id+'-custom'),mg=document.getElementById(id+'-main'),re=document.getElementById(id+'-rate');if(sel.value==='custom'){cr.classList.remove('hidden');mg.classList.add('hidden');}else{cr.classList.add('hidden');mg.classList.remove('hidden');const o=sel.options[sel.selectedIndex],r=parseFloat(o.dataset.rate),u=o.dataset.unit;re.textContent=r>0?'$'+r.toLocaleString()+' / '+u:'';}calculate();}
+function removeRow(id){const e=document.getElementById(id);if(e){e.remove();calculate();}}
+function addMisc(type){miscCount++;const id='misc-'+type+'-'+miscCount,c=document.getElementById(type+'-misc'),d=document.createElement('div');d.className='misc-row';d.id=id;d.innerHTML=`<div class="misc-name-wrap"><input type="text" placeholder="Misc item description..." style="font-weight:700;"><button class="remove-btn" onclick="removeRow('${id}')" style="padding:8px 12px;min-height:40px;">✕</button></div><input type="number" inputmode="decimal" class="misc-amount" placeholder="$ Amount" step="0.01" oninput="calculate()">`;c.appendChild(d);}
+function calcMisc(type){let t=0;document.querySelectorAll('#'+type+'-misc .misc-row').forEach(r=>{const inp=r.querySelector('input[type="number"]');t+=v(inp?inp.value:0);});return t;}
+function calculate(){
+// Per-job sale prices
+const gSale=v(document.getElementById('gutters-sale').value);
+const iSale=v(document.getElementById('insulation-sale').value);
+const cSale=v(document.getElementById('coating-sale').value);
+const rSale=v(document.getElementById('roof-sale').value);
+// Gutters
+const glf=v(document.getElementById('gutters-lf').value),gw=v(document.getElementById('gutters-wood').value);let gb=glf*27+gw*17;document.getElementById('gutters-lf-total').textContent=fmt(glf*27);document.getElementById('gutters-wood-total').textContent=fmt(gw*17);let ga=0;document.querySelectorAll('#gutters-addons .item-grid').forEach(r=>{const i=r.querySelectorAll('input[type="number"]');if(i.length>=2){const t=v(i[0].value)*v(i[1].value);ga+=t;const te=r.querySelector('.item-total');if(te)te.textContent=fmt(t);}});const gPAR=gb+ga+calcMisc('gutters');document.getElementById('gutters-par-total').textContent=fmt(gPAR);
+// Insulation
+const isf=v(document.getElementById('insulation-sf').value),iw=v(document.getElementById('insulation-wood').value);let ib=isf*4+iw*17;document.getElementById('insulation-sf-total').textContent=fmt(isf*4);document.getElementById('insulation-wood-total').textContent=fmt(iw*17);let ia=0;document.querySelectorAll('#insulation-addons .item-grid').forEach(r=>{const i=r.querySelectorAll('input[type="number"]');if(i.length>=2){const t=v(i[0].value)*v(i[1].value);ia+=t;const te=r.querySelector('.item-total');if(te)te.textContent=fmt(t);}});const iPAR=ib+ia+calcMisc('insulation');document.getElementById('insulation-par-total').textContent=fmt(iPAR);
+// Coating
+let cPAR=0;document.querySelectorAll('#coating-products > div').forEach(w=>{const sel=w.querySelector('select'),mg=document.getElementById(w.id+'-main'),qi=mg?mg.querySelector('input[type="number"]'):null,te=document.getElementById(w.id+'-total'),cr=document.getElementById(w.id+'-custom');if(sel&&sel.value==='custom'&&cr){const ci=cr.querySelectorAll('input[type="number"]');if(ci.length>=2){const t=v(ci[0].value)*v(ci[1].value);cPAR+=t;const ct=document.getElementById(w.id+'-custom-total');if(ct)ct.textContent=fmt(t);if(te)te.textContent='';}}else if(sel&&sel.value){const o=sel.options[sel.selectedIndex],r=parseFloat(o.dataset.rate)||0,q=v(qi?qi.value:0),t=r*q;cPAR+=t;if(te)te.textContent=fmt(t);}else{if(te)te.textContent='$0.00';}});cPAR+=calcMisc('coating');document.getElementById('coating-par-total').textContent=fmt(cPAR);
+// Roof
+const rt=document.getElementById('roof-type').value,rg=document.getElementById('roof-grade').value,rs=v(document.getElementById('roof-squares').value),steep=document.getElementById('roof-steep').checked,fp=v(document.getElementById('roof-financing').value);const mr=RR[rt][rg]||RR[rt].standard;document.getElementById('roof-main-rate').textContent='$'+mr.toLocaleString()+' / sq';let rmc=rs*mr;
+const ri=[{id:'roof-extralayer',r:65},{id:'roof-doublehandle',r:50},{id:'roof-osb',r:375},{id:'roof-osbradiant',r:400},{id:'roof-wood',r:17},{id:'roof-raftertails',r:350},{id:'roof-throughwalls',r:220},{id:'roof-turbines',r:125},{id:'roof-fanattics',r:1000},{id:'roof-dormers',r:225},{id:'roof-ridgevent',r:15},{id:'roof-atticat',r:4},{id:'roof-permits',r:750},{id:'roof-gutters',r:27},{id:'roof-dumpfee',r:700}];
+let rec=0;ri.forEach(i=>{const q=v(document.getElementById(i.id).value),t=q*i.r;rec+=t;document.getElementById(i.id+'-total').textContent=fmt(t);});document.getElementById('roof-squares-total').textContent=fmt(rmc);let rtc=rmc+rec+calcMisc('roof');if(steep)rtc+=rmc*0.45;document.getElementById('roof-par-total').textContent=fmt(rtc);
+// Commission
+let ch='',tc=0,totPAR=0,totSale=0,totDiff=0;
+if(activeJobs.has('gutters')){const d=gSale-gPAR;let c=d>=0?(gPAR*0.10)+(d*0.50):0;tc+=c;totPAR+=gPAR;totSale+=gSale;totDiff+=d;ch+=bCR('🏠 Gutters',gPAR,gSale,d,c,'10% PAR + 50% Overage');}
+if(activeJobs.has('insulation')){const d=iSale-iPAR;let c=d>=0?(iPAR*0.10)+(d*0.50):0;tc+=c;totPAR+=iPAR;totSale+=iSale;totDiff+=d;ch+=bCR('🧱 Insulation',iPAR,iSale,d,c,'10% PAR + 50% Overage');}
+if(activeJobs.has('coating')){const d=cSale-cPAR;let c=d>=0?(cPAR*0.10)+(d*0.50):0;tc+=c;totPAR+=cPAR;totSale+=cSale;totDiff+=d;ch+=bCR('🎨 Coating',cPAR,cSale,d,c,'10% PAR + 50% Overage');}
+if(activeJobs.has('roof')){let ra=rSale;if(fp>0)ra=rSale*(1-fp/100);const d=ra-rtc;let c=Math.max(0,d/2);tc+=c;totPAR+=rtc;totSale+=ra;totDiff+=d;ch+=bCR('🔨 Roof',rtc,ra,d,c,'(Sale − Cost) ÷ 2',fp>0?`After ${fp}% financing`:'');}
+document.getElementById('commissionRows').innerHTML=ch;
+document.getElementById('combinedPAR').innerHTML='<span class="combined-mobile-label">Job Cost</span>'+fmt(totPAR);
+document.getElementById('combinedSale').innerHTML='<span class="combined-mobile-label">Sale Price</span>'+fmt(totSale);
+const cdc=totDiff>=0?'color:var(--accent-gutters)':'color:var(--accent-roof)';
+document.getElementById('combinedDiff').innerHTML='<span class="combined-mobile-label">Over/Under</span><span style="'+cdc+'">'+(totDiff>=0?'+':'')+fmt(totDiff)+'</span>';
+document.getElementById('combinedComm').innerHTML='<span class="combined-mobile-label">Commission</span>'+fmt(tc);
+document.getElementById('totalCommission').textContent=fmt(tc);
+const sc=Math.max(1,v(document.getElementById('splitCount').value)),rd=v(document.getElementById('rideAlongDeduct').value);document.getElementById('numReps').value=sc;const pr=(tc/sc)-rd;document.getElementById('perRepCommission').textContent=fmt(pr);document.getElementById('perRepCommission').style.color=pr>=0?'var(--accent-gutters)':'var(--accent-roof)';
+}
+function bCR(n,par,al,d,c,formula,note){
+const dc=d>=0?'positive':'negative';
+const nh=note?`<div class="ctr-note">${note}</div>`:'';
+const fh=formula?`<div class="ctr-formula">${formula}</div>`:'';
+return `<div class="comm-table-row">
+<div class="ctr-job">${n}</div>
+<div class="ctr-cell"><span class="ctr-mobile-label">Job Cost (PAR)</span><div class="ctr-val">${fmt(par)}</div></div>
+<div class="ctr-cell"><span class="ctr-mobile-label">Sale Price</span><div class="ctr-val">${fmt(al)}${nh}</div></div>
+<div class="ctr-cell"><span class="ctr-mobile-label">Over / Under</span><div class="ctr-val ${dc}">${d>=0?'+':''}${fmt(d)}</div></div>
+<div class="ctr-cell ctr-comm-cell"><span class="ctr-mobile-label">Commission</span><div class="ctr-val ctr-comm">${fmt(c)}</div>${fh}</div>
+</div>`;}
+function resetAll(){if(!confirm('Reset everything?'))return;activeJobs.clear();['gutters','insulation','coating','roof'].forEach(j=>{document.getElementById('toggle-'+j).className='job-toggle';document.getElementById('panel-'+j).classList.remove('active');document.getElementById('check-'+j).textContent='';});document.querySelectorAll('input').forEach(i=>{if(i.type==='number')i.value='';else if(i.type==='text')i.value='';else if(i.type==='checkbox')i.checked=false;});document.getElementById('numReps').value='1';document.getElementById('splitCount').value='1';document.getElementById('roof-dumpfee').value='0';document.getElementById('gutters-addons').innerHTML='';document.getElementById('insulation-addons').innerHTML='';document.getElementById('coating-products').innerHTML='';document.getElementById('gutters-misc').innerHTML='';document.getElementById('insulation-misc').innerHTML='';document.getElementById('coating-misc').innerHTML='';document.getElementById('roof-misc').innerHTML='';document.getElementById('steepToggle').classList.remove('active');document.getElementById('steepBox').textContent='';selectRoofType('overlay');selectGrade('standard');calculate();}
+document.getElementById('numReps').addEventListener('input',function(){document.getElementById('splitCount').value=this.value;calculate();});
+document.getElementById('splitCount').addEventListener('input',function(){document.getElementById('numReps').value=this.value;calculate();});
+
+// Smart print: hide $0 rows, compact layout
+window.addEventListener('beforeprint', function() {
+    // Hide item rows with $0.00 total (except headers and misc)
+    document.querySelectorAll('.job-panel.active .item-grid').forEach(row => {
+        if (row.classList.contains('header')) return;
+        const total = row.querySelector('.item-total');
+        if (total && total.textContent.trim() === '$0.00') {
+            row.dataset.printHidden = '1';
+            row.style.display = 'none';
+        }
+    });
+    // Hide empty misc containers
+    ['gutters','insulation','coating','roof'].forEach(t => {
+        const mc = document.getElementById(t+'-misc');
+        if (mc && mc.children.length === 0) mc.style.display = 'none';
+    });
+});
+window.addEventListener('afterprint', function() {
+    document.querySelectorAll('[data-print-hidden]').forEach(row => {
+        row.style.display = '';
+        delete row.dataset.printHidden;
+    });
+    ['gutters','insulation','coating','roof'].forEach(t => {
+        const mc = document.getElementById(t+'-misc');
+        if (mc) mc.style.display = '';
+    });
+});
+
+calculate();
+</script>
+</body>
+</html>
